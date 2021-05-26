@@ -1,8 +1,8 @@
 import hashlib
 import json
+from textwrap import dedent
 from time import time
 from uuid import uuid4
-
 
 from flask import Flask, jsonify, request
 from flask.wrappers import Response
@@ -10,20 +10,58 @@ from flask.wrappers import Response
 class Blockchain(object):
 
 
+
     def __init__(self):
         self.chain = []
         self.current_transactions = []
 
         # Create the genesis block
-        self.new_block(previous_hash=1, proof=100)
+        self.new_block(previous_hash='1', proof=100)
 
-    def proof_of_work(self, last_proof):
+
+
+    def valid_chain(self, chain):
+        """
+        Determine if a given blockchain is valid
+        :param chain: A blockchain
+        :return: True if valid, False if not
+        """
+
+        last_block = chain[0]
+        current_index = 1
+
+        while current_index < len(chain):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print("\n-----------\n")
+            # Check that the hash of the block is correct
+            last_block_hash = self.hash(last_block)
+            if block['previous_hash'] != last_block_hash:
+                return False
+
+            # Check that the Proof of Work is correct
+            if not self.valid_proof(last_block['proof'], block['proof'], last_block_hash):
+                return False
+
+            last_block = block
+            current_index += 1
+
+        return True
+
+    
+    
+
+    def proof_of_work(self, last_block):
         ## Simple Proof of work algorithm
         ## Find a number p such that the hash(pp') contains leading 4 zeroes, where p is the previous p'
         ## p is the previous proof, and p' is the new proof
 
+        last_proof = last_block['proof']
+        last_hash = self.hash(last_block)
+
         proof = 0
-        while self.valid_proof(last_proof, proof) is False:
+        while self.valid_proof(last_proof, proof, last_hash) is False:
             proof += 1
         
         return proof
@@ -37,7 +75,7 @@ class Blockchain(object):
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
 
-    def new_block(self):
+    def new_block(self, proof, previous_hash):
         # Creates a new block and adds it the chain
         # Previous_hash - is the hash of the previous block in the chain
         
@@ -56,7 +94,7 @@ class Blockchain(object):
         return block
 
 
-    def new_transaction(self):
+    def new_transaction(self, sender, recipient, amount):
         ## Creates a new transaction to go into the next mined Block
 
         self.current_transactions.append({
@@ -104,8 +142,7 @@ def mine():
     ## The sender is "0" to signify that this node has mined a new coin.
 
     last_block = blockchain.last_block
-    last_proof = last_block['proof']
-    proof = blockchain.proof_of_work(last_proof)
+    proof = blockchain.proof_of_work(last_block)
 
     blockchain.new_transaction(
         sender = "0",
@@ -139,7 +176,7 @@ def new_transaction():
     Response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(Response)
 
-@app.route('/mine', methods=['GET'])
+@app.route('/chain', methods=['GET'])
 def full_chain():
     response = {
         'chain': blockchain.chain,
