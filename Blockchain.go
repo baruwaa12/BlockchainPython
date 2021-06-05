@@ -1,4 +1,4 @@
-package Blockchain
+package main
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ type Block struct {
 
 func (b *Block) SetHash() {
 	timestamp := []byte(strconv.FormatInt(b.Timestamp, 10))
-	headers := bytes.Join([][]byte{b.PrevBlockHash, b.Data, timestamp}, []byte{})
+	headers := bytes.Join([][]byte{b.PrevBlockHash, b.data, timestamp}, []byte{})
 	hash := sha256.Sum256(headers)
 
 	b.Hash = hash[:]
@@ -42,6 +42,7 @@ func (bc *Blockchain) AddBlock(data string) {
 func NewBlock(data string, prevBlockHash []byte) *Block {
 	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}}
 	block.SetHash()
+
 	return block
 }
 
@@ -61,7 +62,7 @@ func main() {
 
 	for _, block := range bc.blocks {
 		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-		fmt.Printf("Data: %s\n", block.Data)
+		fmt.Printf("Data: %s\n", block.data)
 		fmt.Printf("Hash: %x\n", block.Hash)
 		fmt.Println()
 	}
