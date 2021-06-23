@@ -29,6 +29,9 @@ type Block struct {
 // Blockchain is a series of validated Blocks
 var Blockchain []Block
 
+
+// bcServer handles incoming concurrent Blocks#
+var bcServer chan []Block
 // Message takes incoming JSON payload for writing heart rate
 type Message struct {
 	BPM int
@@ -170,5 +173,5 @@ func generateBlock(oldBlock Block, BPM int) Block {
 	newBlock.PrevHash = oldBlock.Hash
 	newBlock.Hash = calculateHash(newBlock)
 
-	return newBlock
+	return newBlock, nil
 }
